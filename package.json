@@ -1,0 +1,28 @@
+{
+  "name": "math-calc-test-a",
+  "version": "1.0.0",
+  "description": "",
+  "homepage": "https://github.com/martinezq/math-calc-test-a#readme",
+  "bugs": {
+    "url": "https://github.com/martinezq/math-calc-test-a/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/martinezq/math-calc-test-a.git"
+  },
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha --recursive",
+    "watch": "mocha -- --watch"
+  },
+  "devDependencies": {
+    "chai": "^5.2.0",
+    "mocha": "^11.1.0"
+  },
+  "dependencies": {
+    "ramda": "^0.30.1"
+  }
+}
