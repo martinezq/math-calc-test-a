@@ -3,14 +3,6 @@ const { parseExpression } = require('../src/expression-parser');
 
 describe('Parse simple expression', () => {
 
-    it('single number', async () => {
-      expect(parseExpression('100001')).to.deep.equal(100001);
-    });
-
-    it('single negative number', async () => {
-      expect(parseExpression('-9998')).to.deep.equal(-9998);
-    });
-
     it('simple add', async () => {
       expect(parseExpression('1 + 2')).to.deep.equal({ operator: '+', left: 1, right: 2 });
     });
@@ -109,6 +101,14 @@ describe('Parse combined expression', () => {
 
 describe('Parse edge cases', () => {
 
+  it('single number', async () => {
+    expect(parseExpression('100001')).to.deep.equal(100001);
+  });
+
+  it('single negative number', async () => {
+    expect(parseExpression('-9998')).to.deep.equal(-9998);
+  });
+
   it('spaces before', async () => {
     expect(parseExpression('  1 + 2')).to.deep.equal({ operator: '+', left: 1, right: 2 });
   });
@@ -123,6 +123,10 @@ describe('Parse edge cases', () => {
 
   it('ignore tabs and new lines', async () => {
     expect(parseExpression('\n  1\t\t+  \n2\n  ')).to.deep.equal({ operator: '+', left: 1, right: 2 });
+  });
+
+  it('handle decimals', async () => {
+    expect(parseExpression('-0.200 + 100.001')).to.deep.equal({ operator: '+', left: -0.2, right: 100.001 });
   });
 
 });

@@ -1,52 +1,82 @@
 const R = require('ramda');
 
+/**
+ * Entry point: takes an arithmetic expression string,
+ * tokenizes it, parses the tokens, and returns an AST.
+ *
+ * @param {string} str - The arithmetic expression to parse, e.g. "2 + 3 * 4".
+ * @return {object|number} The abstract syntax tree (AST) representing the expression.
+ */
 function parseExpression(str) {
-
     const O_ADD = '+';
     const O_SUB = '-';
     const O_MUL = '*';
     const O_DIV = '/';
 
     const T_OPERATOR = 'Operator';
-    const T_NUM = 'Number;'
+    const T_NUM = 'Number';
     const T_EOF = 'EOF';
 
-    const AST_LIT = 'Literal';
-    const AST_EXP_BIN = 'BinaryExpression';
-
-    function tokenize(str) {
-
-        return str
-            .split(/\s/)
+    /**
+     * Splits the input string into an array of token objects.
+     * Operators are labeled T_OPERATOR, numbers T_NUM.
+     *
+     * @param {string} input - The raw expression string.
+     * @return {Array<{type: string, value: string|number}>} Array of token objects.
+     */
+    function tokenize(input) {
+        return input
+            .split(/\s+/)
             .filter(t => t.length > 0)
             .map(t => {
                 if (isNaN(t)) {
                     return { type: T_OPERATOR, value: t };
                 } else {
-                    return { type: T_NUM, value: Number(t) }
+                    return { type: T_NUM, value: Number(t) };
                 }
             });
     }
    
-    function parseTokens(tokens) {
+    /**
+     * Takes an array of tokens and builds a recursive AST.
+     *
+     * @param {Array<{type: string, value: string|number}>} tokens - Token list to parse.
+     * @return {object|number} AST or numeric literal.
+     */
+    function generateAstFromTokens(tokens) {
         let pos = 0;
 
+        /**
+         * Returns the current token without advancing.
+         *
+         * @return {{type: string, value?: any}} The current token or EOF token.
+         */
         function peek() {
             return tokens[pos] || { type: T_EOF };
         }
 
-        function pop() {
+        /**
+         * Consumes and returns the current token.
+         *
+         * @return {{type: string, value?: any}} The consumed token.
+         */
+        function consume() {
             return tokens[pos++];
         }
 
-        function parseExpression() {
-            let node = parseTerm();
+        /**
+         * Parses addition and subtraction, left-associatively.
+         *
+         * @return {object|number} AST node for addition/subtraction or sub-expression.
+         */
+        function parseAdditionAndSubtraction() {
+            let node = parseMultiplicationAndDivision();
             let token = peek();
 
             while (token.type === T_OPERATOR && (token.value === O_ADD || token.value === O_SUB)) {
-                token = pop();
+                token = consume();
                 const left = node;
-                const right = parseTerm();
+                const right = parseMultiplicationAndDivision();
                 node = { operator: token.value, left, right };
                 token = peek();
             }
@@ -54,14 +84,19 @@ function parseExpression(str) {
             return node;
         }
 
-        function parseTerm() {
-            let node = parsePrimary();
+        /**
+         * Parses multiplication and division, left-associatively.
+         *
+         * @return {object|number} AST node for multiplication/division or sub-expression.
+         */
+        function parseMultiplicationAndDivision() {
+            let node = parsePrimaryValue();
             let token = peek();
 
             while (token.type === T_OPERATOR && (token.value === O_MUL || token.value === O_DIV)) {
-                token = pop();
+                token = consume();
                 const left = node;
-                const right = parsePrimary();
+                const right = parsePrimaryValue();
                 node = { operator: token.value, left, right };
                 token = peek();
             }
@@ -69,7 +104,14 @@ function parseExpression(str) {
             return node;
         }
 
-        function parsePrimary() {
+        /**
+         * Parses a primary value (must be a number),
+         * throws on unexpected token or end of input.
+         *
+         * @throws {Error} If an unexpected token or end of input is encountered.
+         * @return {number} The numeric value of the token.
+         */
+        function parsePrimaryValue() {
             if (peek().type === T_EOF) {
                 throw Error(`Unexpected end of expression`);
             }
@@ -78,28 +120,26 @@ function parseExpression(str) {
                 throw Error(`Unexpected value ${peek().value} at position ${pos + 1}`);
             }
 
-            const token = pop();
+            const token = consume();
             return token.value;
         }
 
-        const ast = parseExpression();
-
+        // Build the AST and ensure no leftover tokens
+        const ast = parseAdditionAndSubtraction();
         if (pos < tokens.length) {
             throw Error(`Unexpected value ${peek().value} at position ${pos + 1}`);
         }
 
         return ast;
-
     }
 
-    // -----
-
+    // Tokenize input, parse into AST, and return it
     const tokens = tokenize(str);
-    const ast = parseTokens(tokens);
+    const ast = generateAstFromTokens(tokens);
 
     return ast;
 }
 
 module.exports = {
     parseExpression
-}
+};
